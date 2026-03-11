@@ -5,6 +5,7 @@ from typing import Optional
 import requests
 
 from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL, EMBEDDING_TIMEOUT, MAX_RETRIES, RETRY_BASE_WAIT, RETRY_BACKOFF_FACTOR
+from rag.cache import get_cached_embedding, cache_embedding
 from rag.exceptions import EmbeddingError
 from rag.logger import get_logger
 
@@ -45,9 +46,19 @@ def _make_embedding_request(text: str) -> list[float]:
     raise EmbeddingError(f"Failed to get embedding: {last_exception}") from last_exception
 
 
-def embed_text(text: str, i: Optional[int] = None, total: Optional[int] = None) -> list[float]:
+def embed_text(text: str, i: Optional[int] = None, total: Optional[int] = None, use_cache: bool = True) -> list[float]:
     """Generate embeddings for the given text using Ollama."""
     if i is not None:
         logger.info(f"Embedding {i}/{total}")
 
-    return _make_embedding_request(text)
+    if use_cache:
+        cached = get_cached_embedding(text)
+        if cached is not None:
+            return cached
+
+    embedding = _make_embedding_request(text)
+
+    if use_cache:
+        cache_embedding(text, embedding)
+
+    return embedding

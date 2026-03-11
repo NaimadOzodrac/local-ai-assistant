@@ -6,3 +6,4 @@ venv/
 .agents/
 skills-lock.json
 refactor.md
+embeddings_cache.json
