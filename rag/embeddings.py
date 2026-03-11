@@ -3,7 +3,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
-import requests
+import httpx
 
 from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL, EMBEDDING_TIMEOUT, MAX_RETRIES, RETRY_BASE_WAIT, RETRY_BACKOFF_FACTOR, INDEXING_MAX_WORKERS
 from rag.cache import get_cached_embedding, cache_embedding
@@ -19,18 +19,18 @@ def _make_embedding_request(text: str) -> list[float]:
     
     for attempt in range(MAX_RETRIES + 1):
         try:
-            response = requests.post(
-                OLLAMA_EMBEDDING_URL,
-                json={
-                    "model": EMBED_MODEL,
-                    "prompt": text
-                },
-                timeout=EMBEDDING_TIMEOUT
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["embedding"]
-        except (requests.RequestException, json.JSONDecodeError, KeyError) as e:
+            with httpx.Client(timeout=EMBEDDING_TIMEOUT) as client:
+                response = client.post(
+                    OLLAMA_EMBEDDING_URL,
+                    json={
+                        "model": EMBED_MODEL,
+                        "prompt": text
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                return data["embedding"]
+        except (httpx.RequestError, json.JSONDecodeError, KeyError) as e:
             last_exception = e
             
             if attempt == MAX_RETRIES:
@@ -65,7 +65,7 @@ def embed_text(text: str, i: Optional[int] = None, total: Optional[int] = None, 
     return embedding
 
 
-def embed_texts_batch(texts: list[str], max_workers: int = None) -> list[list[float]]:
+def embed_texts_batch(texts: list[str], max_workers: int | None = None) -> list[list[float]]:
     """
     Generate embeddings for multiple texts in parallel using ThreadPoolExecutor.
     
