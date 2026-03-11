@@ -1,7 +1,4 @@
-from config import CHUNK_SIZE, CHUNK_OVERLAP
-
-
-def chunk_text(text, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
+def chunk_text(text, chunk_size, overlap):
 
     chunks = []
 

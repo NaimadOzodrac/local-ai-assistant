@@ -4,18 +4,16 @@ from rag.search import search_documents
 from rag.reranker import rerank
 from config import MAX_CONTEXT_CHARS
 
-def build_context(results):
-    context_parts = []
+def build_context(docs):
+    parts = []
 
-    print("\nRetrieved chunks:\n")
-
-    for i, doc in enumerate(results[:4]):
-        context_parts.append(f"[Source {i+1}]\n{doc}")
+    for i, doc in enumerate(docs):
+        parts.append(f"[Source {i+1}]\n{doc}")
         print(f"Chunk {i+1}:")
         print(doc[:200])
         print("------")
 
-    return "\n\n".join(context_parts)
+    return "\n\n".join(parts)
 
 def rerank_chunks(question, chunks):
     scored = []
@@ -45,15 +43,21 @@ def ask_with_context(question):
 
     results = search_documents(question)
 
-    chunks = results["documents"][0]
+    parents = []
 
-    best_chunks = rerank(question, chunks, top_k=3)
+    for meta in results["metadatas"][0]:
+        parents.append(meta["parent_text"])
 
-    # reranked_results = rerank_chunks(question, results["documents"][0])
-
-    # best_chunks = reranked_results[:3]
-
-    ids = results["ids"][0]
+    # eliminar duplicados sin romper orden
+    parents = list(dict.fromkeys(parents))
+    print(f"Retrieved parents: {len(parents)}")
+    print("-------------------")
+    print("-------------------")
+    # rerank
+    best_chunks = rerank(question, parents, top_k=3)
+    print(f"Using top chunks: {len(best_chunks)}")
+    print("-------------------")
+    print("-------------------")
 
     context = build_context(best_chunks)
     context = context[:MAX_CONTEXT_CHARS]
@@ -77,4 +81,4 @@ def ask_with_context(question):
 
     stream_llm(prompt)
 
-    return ids
+    return results["ids"][0]

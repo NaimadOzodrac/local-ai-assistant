@@ -3,6 +3,7 @@ import chromadb
 from rag.chunker import chunk_text
 from rag.pdf_loader import load_pdf
 from rag.embeddings import embed_text
+from config import PARENT_CHUNK_SIZE, PARENT_OVERLAP, CHILD_CHUNK_SIZE, CHILD_OVERLAP
 
 client = chromadb.PersistentClient(path="./chroma_db")
 
@@ -11,6 +12,11 @@ collection = client.get_or_create_collection("documents")
 docs_path = "documents"
 
 all_chunks = []
+metadatas = []
+embeddings = []
+ids = []
+
+chunk_counter = 0
 
 for file in os.listdir(docs_path):
 
@@ -28,20 +34,46 @@ for file in os.listdir(docs_path):
     else:
         continue
 
-    chunks = chunk_text(text)
+    # dividir en parents
+    parents = chunk_text(
+        text,
+        chunk_size=PARENT_CHUNK_SIZE,
+        overlap=PARENT_OVERLAP
+    )
 
-    all_chunks.extend(chunks)
+    for parent_id, parent in enumerate(parents):
 
-ids = [f"chunk_{i}" for i in range(len(all_chunks))]
+        # dividir cada parent en children
+        children = chunk_text(
+            parent,
+            chunk_size=CHILD_CHUNK_SIZE,
+            overlap=CHILD_OVERLAP
+        )
 
-embeddings = []
+        for child_id, child in enumerate(children):
 
+            all_chunks.append(child)
+
+            ids.append(f"chunk_{chunk_counter}")
+
+            metadatas.append({
+                "file": file,
+                "parent_id": parent_id,
+                "parent_text": parent
+            })
+
+            chunk_counter += 1
+
+
+# generar embeddings
 for i, chunk in enumerate(all_chunks):
     embeddings.append(embed_text(chunk, i+1, len(all_chunks)))
+
 
 collection.add(
     documents=all_chunks,
     embeddings=embeddings,
+    metadatas=metadatas,
     ids=ids
 )
 
