@@ -1,6 +1,6 @@
-def chunk_text(text, chunk_size, overlap):
-
-    chunks = []
+def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
+    """Split text into overlapping chunks of specified size."""
+    chunks: list[str] = []
 
     start = 0
 

@@ -1,5 +1,8 @@
 import os
+from typing import Any
+
 import chromadb
+
 from rag.chunker import chunk_text
 from rag.pdf_loader import load_pdf
 from rag.embeddings import embed_text
@@ -11,10 +14,10 @@ collection = client.get_or_create_collection("documents")
 
 docs_path = "documents"
 
-all_chunks = []
-metadatas = []
-embeddings = []
-ids = []
+all_chunks: list[str] = []
+metadatas: list[dict[str, Any]] = []
+embeddings: list[list[float]] = []
+ids: list[str] = []
 
 chunk_counter = 0
 
@@ -34,7 +37,6 @@ for file in os.listdir(docs_path):
     else:
         continue
 
-    # dividir en parents
     parents = chunk_text(
         text,
         chunk_size=PARENT_CHUNK_SIZE,
@@ -43,7 +45,6 @@ for file in os.listdir(docs_path):
 
     for parent_id, parent in enumerate(parents):
 
-        # dividir cada parent en children
         children = chunk_text(
             parent,
             chunk_size=CHILD_CHUNK_SIZE,
@@ -65,7 +66,6 @@ for file in os.listdir(docs_path):
             chunk_counter += 1
 
 
-# generar embeddings
 for i, chunk in enumerate(all_chunks):
     embeddings.append(embed_text(chunk, i+1, len(all_chunks)))
 

@@ -1,8 +1,12 @@
+from typing import Optional
+
 import requests
+
 from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL
 
-def embed_text(text, i=None, total=None):
 
+def embed_text(text: str, i: Optional[int] = None, total: Optional[int] = None) -> list[float]:
+    """Generate embeddings for the given text using Ollama."""
     if i is not None:
         print(f"Embedding {i}/{total}")
 

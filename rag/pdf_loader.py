@@ -1,8 +1,8 @@
 from pypdf import PdfReader
 
 
-def load_pdf(path):
-
+def load_pdf(path: str) -> str:
+    """Load and extract text from a PDF file."""
     reader = PdfReader(path)
 
     text = ""
