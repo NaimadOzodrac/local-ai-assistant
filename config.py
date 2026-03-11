@@ -4,6 +4,8 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_EMBEDDING_URL = "http://localhost:11434/api/embeddings"
 MODEL = "mistral"
 
+LLM_TIMEOUT = 300
+EMBEDDING_TIMEOUT = 120
 
 PARENT_CHUNK_SIZE = 1800
 PARENT_OVERLAP = 200

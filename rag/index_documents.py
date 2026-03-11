@@ -6,13 +6,23 @@ import chromadb
 from rag.chunker import chunk_text
 from rag.pdf_loader import load_pdf
 from rag.embeddings import embed_text
+from rag.exceptions import DocumentLoadError
+from rag.logger import get_logger
 from config import PARENT_CHUNK_SIZE, PARENT_OVERLAP, CHILD_CHUNK_SIZE, CHILD_OVERLAP
+
+logger = get_logger(__name__)
 
 client = chromadb.PersistentClient(path="./chroma_db")
 
 collection = client.get_or_create_collection("documents")
 
 docs_path = "documents"
+
+if not os.path.exists(docs_path):
+    raise DocumentLoadError(f"Documents directory does not exist: {docs_path}")
+
+if not os.path.isdir(docs_path):
+    raise DocumentLoadError(f"Documents path is not a directory: {docs_path}")
 
 all_chunks: list[str] = []
 metadatas: list[dict[str, Any]] = []
@@ -25,23 +35,38 @@ for file in os.listdir(docs_path):
 
     path = os.path.join(docs_path, file)
 
-    if file.endswith(".txt"):
-
-        with open(path, encoding="utf-8") as f:
-            text = f.read()
-
-    elif file.endswith(".pdf"):
-
-        text = load_pdf(path)
-
-    else:
+    if not os.path.isfile(path):
         continue
 
-    parents = chunk_text(
-        text,
-        chunk_size=PARENT_CHUNK_SIZE,
-        overlap=PARENT_OVERLAP
-    )
+    try:
+        if file.endswith(".txt"):
+
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+
+        elif file.endswith(".pdf"):
+
+            text = load_pdf(path)
+
+        else:
+            continue
+    except Exception as e:
+        logger.warning(f"Failed to load {file}: {e}")
+        continue
+
+    if not text or not text.strip():
+        logger.warning(f"Empty document {file}, skipping")
+        continue
+
+    try:
+        parents = chunk_text(
+            text,
+            chunk_size=PARENT_CHUNK_SIZE,
+            overlap=PARENT_OVERLAP
+        )
+    except ValueError as e:
+        logger.warning(f"Failed to chunk {file}: {e}")
+        continue
 
     for parent_id, parent in enumerate(parents):
 
@@ -66,8 +91,15 @@ for file in os.listdir(docs_path):
             chunk_counter += 1
 
 
+if not all_chunks:
+    raise DocumentLoadError("No documents were successfully indexed")
+
 for i, chunk in enumerate(all_chunks):
-    embeddings.append(embed_text(chunk, i+1, len(all_chunks)))
+    try:
+        embeddings.append(embed_text(chunk, i+1, len(all_chunks)))
+    except Exception as e:
+        logger.warning(f"Failed to generate embedding for chunk {i}: {e}")
+        continue
 
 
 collection.add(
@@ -77,4 +109,4 @@ collection.add(
     ids=ids
 )
 
-print(f"Indexed {len(all_chunks)} chunks")
+logger.info(f"Indexed {len(all_chunks)} chunks")

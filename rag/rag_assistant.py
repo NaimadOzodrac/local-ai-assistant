@@ -2,7 +2,10 @@ from llm.client import ask_llm
 from llm.client import stream_llm
 from rag.search import search_documents
 from rag.reranker import rerank
+from rag.logger import get_logger
 from config import MAX_CONTEXT_CHARS
+
+logger = get_logger(__name__)
 
 
 def build_context(docs: list[str]) -> str:
@@ -11,9 +14,7 @@ def build_context(docs: list[str]) -> str:
 
     for i, doc in enumerate(docs):
         parts.append(f"[Source {i+1}]\n{doc}")
-        print(f"Chunk {i+1}:")
-        print(doc[:200])
-        print("------")
+        logger.debug(f"Chunk {i+1}: {doc[:200]}")
 
     return "\n\n".join(parts)
 
@@ -53,13 +54,9 @@ def ask_with_context(question: str) -> list[str]:
         parents.append(meta["parent_text"])
 
     parents = list(dict.fromkeys(parents))
-    print(f"Retrieved parents: {len(parents)}")
-    print("-------------------")
-    print("-------------------")
+    logger.info(f"Retrieved {len(parents)} parent chunks")
     best_chunks = rerank(question, parents, top_k=3)
-    print(f"Using top chunks: {len(best_chunks)}")
-    print("-------------------")
-    print("-------------------")
+    logger.info(f"Using top {len(best_chunks)} chunks after reranking")
 
     context = build_context(best_chunks)
     context = context[:MAX_CONTEXT_CHARS]
