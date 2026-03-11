@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20AI-orange.svg)](https://ollama.ai/)
 
-**Enterprise-Grade Local RAG System for Intelligent Document Q&A**
+**Advanced  Local RAG System for Document Q&A**
 
 [Aplicación de demostración de capacidades de desarrollo en IA local y sistemas RAG]
 
@@ -163,6 +163,46 @@ local-ai-assistant/
 ├── requirements.txt         # Python dependencies
 └── README.md               # This file
 ```
+
+## Lessons Learned
+
+Building this project provided several practical insights into designing Retrieval-Augmented Generation (RAG) systems.
+
+### Retrieval quality depends heavily on chunking strategy
+
+The choice of chunk size and overlap had a significant impact on retrieval accuracy.  
+Larger chunks improved contextual understanding but reduced precision, while smaller chunks increased precision but sometimes lost important context.
+
+Hierarchical chunking (parent → child chunks) helped balance these trade-offs by allowing fine-grained retrieval while still preserving larger context blocks for the final prompt.
+
+### Reranking improves relevance but affects latency
+
+Using an LLM for reranking produced very high-quality results, but significantly increased response time.  
+Replacing it with a cross-encoder reranker provided a good balance between performance and accuracy.
+
+This highlighted an important trade-off in RAG systems: retrieval quality vs response latency.
+
+### Query formulation matters
+
+Small variations in how a question is phrased can lead to different retrieval results.  
+This suggests that techniques such as query expansion or hybrid search could further improve robustness.
+
+### Local models introduce performance constraints
+
+Running everything locally (embeddings, retrieval, generation) provides privacy and independence from external APIs, but introduces noticeable latency.  
+
+This reinforces the importance of:
+
+- caching embeddings
+- limiting context size
+- optimizing retrieval steps
+
+### RAG systems require experimentation
+
+Unlike traditional software systems, RAG pipelines require continuous tuning.  
+Parameters such as chunk size, top-k retrieval, context limits, and reranking strategy all influence the final answer quality.
+
+Building this project made it clear that effective RAG systems rely as much on experimentation and evaluation as on code.
 
 ---
 
