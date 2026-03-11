@@ -168,6 +168,14 @@ local-ai-assistant/
 
 Building this project provided several practical insights into designing Retrieval-Augmented Generation (RAG) systems.
 
+
+Key takeaways:
+
+- Retrieval quality depends heavily on chunking strategy
+- Reranking significantly improves answer relevance
+- Latency becomes a major constraint when running models locally
+- Effective RAG pipelines require iterative experimentation
+
 ### Retrieval quality depends heavily on chunking strategy
 
 The choice of chunk size and overlap had a significant impact on retrieval accuracy.  
