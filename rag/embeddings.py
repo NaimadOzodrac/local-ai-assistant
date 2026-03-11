@@ -1,10 +1,11 @@
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 import requests
 
-from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL, EMBEDDING_TIMEOUT, MAX_RETRIES, RETRY_BASE_WAIT, RETRY_BACKOFF_FACTOR
+from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL, EMBEDDING_TIMEOUT, MAX_RETRIES, RETRY_BASE_WAIT, RETRY_BACKOFF_FACTOR, INDEXING_MAX_WORKERS
 from rag.cache import get_cached_embedding, cache_embedding
 from rag.exceptions import EmbeddingError
 from rag.logger import get_logger
@@ -62,3 +63,28 @@ def embed_text(text: str, i: Optional[int] = None, total: Optional[int] = None, 
         cache_embedding(text, embedding)
 
     return embedding
+
+
+def embed_texts_batch(texts: list[str], max_workers: int = None) -> list[list[float]]:
+    """
+    Generate embeddings for multiple texts in parallel using ThreadPoolExecutor.
+    
+    Args:
+        texts: List of texts to embed
+        max_workers: Maximum number of parallel workers. Defaults to INDEXING_MAX_WORKERS from config.
+    
+    Returns:
+        List of embeddings in the same order as input texts.
+    """
+    if max_workers is None:
+        max_workers = INDEXING_MAX_WORKERS
+    
+    if max_workers <= 1:
+        return [embed_text(text, use_cache=True) for text in texts]
+    
+    logger.info(f"Processing {len(texts)} embeddings with {max_workers} workers")
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        embeddings = list(executor.map(embed_text, texts))
+    
+    return embeddings

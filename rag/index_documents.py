@@ -5,7 +5,7 @@ import chromadb
 
 from rag.chunker import chunk_text
 from rag.pdf_loader import load_pdf
-from rag.embeddings import embed_text
+from rag.embeddings import embed_texts_batch
 from rag.exceptions import DocumentLoadError
 from rag.logger import get_logger
 from config import PARENT_CHUNK_SIZE, PARENT_OVERLAP, CHILD_CHUNK_SIZE, CHILD_OVERLAP
@@ -94,12 +94,8 @@ for file in os.listdir(docs_path):
 if not all_chunks:
     raise DocumentLoadError("No documents were successfully indexed")
 
-for i, chunk in enumerate(all_chunks):
-    try:
-        embeddings.append(embed_text(chunk, i+1, len(all_chunks)))
-    except Exception as e:
-        logger.warning(f"Failed to generate embedding for chunk {i}: {e}")
-        continue
+logger.info(f"Generating embeddings for {len(all_chunks)} chunks...")
+embeddings = embed_texts_batch(all_chunks)
 
 
 collection.add(
