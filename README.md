@@ -204,6 +204,8 @@ Parameters such as chunk size, top-k retrieval, context limits, and reranking st
 
 Building this project made it clear that effective RAG systems rely as much on experimentation and evaluation as on code.
 
+This project served as a practical exploration of the challenges involved in building production-ready RAG systems.
+
 ---
 
 ## Installation
