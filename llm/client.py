@@ -1,9 +1,6 @@
 import json
-
 import requests
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "mistral"
+from config import MODEL, OLLAMA_URL
 
 
 def ask_llm(prompt):
@@ -15,8 +12,8 @@ def ask_llm(prompt):
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": 0.3,
-                "num_predict": 80
+                "temperature": 0.7,
+                "num_predict": 120
             }
         }
     )
@@ -34,8 +31,8 @@ def stream_llm(prompt):
             "prompt": prompt,
             "stream": True,
             "options": {
-                "temperature": 0.3,
-                "num_predict": 80
+                "temperature": 0.7,
+                "num_predict": 120
             }
         },
         stream=True

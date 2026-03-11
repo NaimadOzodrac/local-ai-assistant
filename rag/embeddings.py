@@ -1,7 +1,5 @@
 import requests
-
-OLLAMA_URL = "http://localhost:11434/api/embeddings"
-MODEL = "nomic-embed-text"
+from config import OLLAMA_EMBEDDING_URL, EMBED_MODEL
 
 def embed_text(text, i=None, total=None):
 
@@ -9,9 +7,9 @@ def embed_text(text, i=None, total=None):
         print(f"Embedding {i}/{total}")
 
     response = requests.post(
-        OLLAMA_URL,
+        OLLAMA_EMBEDDING_URL,
         json={
-            "model": MODEL,
+            "model": EMBED_MODEL,
             "prompt": text
         }
     )
